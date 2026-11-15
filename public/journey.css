@@ -183,3 +183,12 @@
 .journey-glow:before{content:'';position:absolute;inset:-15%;background:radial-gradient(ellipse at 69% 37%,#f3c88722 0,transparent 32%);filter:blur(32px)}
 .bottle-aura{background:radial-gradient(ellipse,#eaa54442 0,#b86a2230 28%,#713b1e1a 48%,transparent 70%);filter:blur(32px)}
 .journey-stage:after{background:linear-gradient(90deg,#100d0de6 0%,#100d0d42 42%,#100d0dc7 100%),linear-gradient(0deg,#100d0dbb,#100d0d36 52%,#100d0ddd)}
+/* Keep the films legible while preserving the dark, cinematic stage. */
+.perfume-backdrop{opacity:.56;filter:brightness(.82) saturate(.84)}
+.perfume-backdrop.is-active{opacity:.56}
+.journey-stage:after{background:linear-gradient(90deg,#100d0de0 0%,#100d0d70 32%,#100d0d18 52%,#100d0d70 78%,#100d0db0 100%),linear-gradient(0deg,#100d0d78 0%,#100d0d12 46%,#100d0d68 100%)}
+@media(max-width:720px){
+ .perfume-backdrop{filter:brightness(.72) saturate(.82)}
+ .perfume-backdrop.is-active{opacity:.44}
+ .journey-stage:after{background:linear-gradient(180deg,#100d0dde 0%,#100d0d85 18%,#100d0d35 42%,#100d0d30 58%,#100d0d83 82%,#100d0ddf 100%)}
+}
