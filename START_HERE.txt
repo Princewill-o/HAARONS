@@ -1,0 +1,31 @@
+H.AARONS — Developer handoff
+
+This contains the current source website, not just a screenshot or deployment bundle.
+
+QUICK START: DESIGN AND ANIMATION
+1. Extract the ZIP and open the H_AARONS folder in your code editor.
+2. From that folder run: python3 -m http.server 8000 --directory public
+   On Windows you may need: py -m http.server 8000 --directory public
+3. Visit http://localhost:8000 in your browser.
+4. Edit public/index.html, the CSS files and JavaScript files. Refresh to preview.
+   No npm installation is needed for this visual preview.
+
+FILES
+- public/: pages, styles, browser JavaScript and supplied brand assets.
+- worker/: production request handling and waitlist database logic.
+- db/ and drizzle/: database schema and migrations.
+- scripts/build.mjs: production packaging; run npm run build with Node.js installed.
+- .openai/hosting.json: existing Site identity and DB binding. Preserve it.
+- reference/animation-example.mp4: the animation reference supplied by Henry.
+
+ANIMATION WORK
+Implement the desired animation in code; the MP4 is a visual reference, not an implemented effect. Confirm placement and behaviour with Henry. Preserve the approved bottle/model and brand assets. Keep mobile performance, keyboard access and prefers-reduced-motion support. Avoid blocking navigation behind an intro.
+The production Content Security Policy currently allows local scripts and styles. Put code in local files; external scripts require a deliberate policy update. If serving video files through the Worker, add their MIME type in scripts/build.mjs and configure media-src as needed.
+
+LOCAL PREVIEW LIMITS
+The simple static preview does not run /api/waitlist or /api/unsubscribe. These use the hosted Cloudflare Worker and D1 database. A local form submission will fail; do not replace the real API with a fake success message. No subscriber records or account credentials are included.
+
+RETURNING YOUR CHANGES
+Zip the complete updated source folder, include any new assets and a short list of changes, and send it to Henry. Exclude node_modules, .git, .env files and generated dist output. Henry can upload it to the original ChatGPT conversation for review and publication to the existing Site. This ZIP itself does not grant access to the live hosting account.
+
+Source snapshot: 48a97dd49327972513d6729a9206245416479ced
