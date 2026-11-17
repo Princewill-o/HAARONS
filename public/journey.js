@@ -37,8 +37,9 @@ if (journey) {
   const p = Math.max(0, Math.min(1, (window.scrollY - top) / distance));
   const state = getJourneyState(p, motion.matches);
   const x = mobile.matches ? 50 : motion.matches ? 69 : state.x;
-  bottle3D?.update(state, p);
   bottle.style.setProperty('--bottle-x', `${x}%`);
+  stage.style.setProperty('--lens-x', `${x}%`);
+  bottle3D?.update(state, p);
   bottle.style.setProperty('--rotation', `${state.rotation}deg`);
   bottle.style.setProperty('--scale', state.scale);
   bottle.style.setProperty('--cap-lift', `${state.capLift * -165}px`);
