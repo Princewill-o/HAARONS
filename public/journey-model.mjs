@@ -4,6 +4,18 @@ const ease = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
 const between = (p, a, b) => ease((p - a) / (b - a));
 const lerp = (a, b, t) => a + (b - a) * t;
 
+// Match the bottle opening and the plunge into the liquid to the story chapters.
+const filmCues = [[0, .375], [.14, .56], [.25, 1.35], [.4, 2.15], [.49, 2.8], [.60, 4.25], [.75, 6.4], [1, 9.97]];
+export function getFilmTime(progress, duration) {
+ if (!Number.isFinite(duration) || duration <= 0) return 0;
+ const p = clamp(Number.isFinite(progress) ? progress : 0);
+ const index = Math.max(1, filmCues.findIndex(cue => cue[0] >= p));
+ const [start, startTime] = filmCues[index - 1];
+ const [end, endTime] = filmCues[index];
+ const seconds = lerp(startTime, endTime, (p - start) / (end - start));
+ return seconds / filmCues.at(-1)[1] * Math.max(0, duration - 1 / 48);
+}
+
 // Each row frames a shot at a position in the story, so reverse scroll retraces it.
 // Progress, screen X, roll, yaw, camera distance, focal height, elevation
 const shots = [

@@ -29,34 +29,50 @@ await check('story initializes without JavaScript or CSP errors', async () => {
  assert.deepEqual(errors,[]);
  assert.equal(await page.locator('.journey-cta').first().evaluate(e => getComputedStyle(e).color), 'rgb(250, 245, 236)');
 });
-await check('real 3D renderer initializes and retains the photograph fallback', async () => {
- await page.waitForFunction(()=>document.querySelector('.travelling-bottle').dataset.renderer==='webgl',{},{timeout:30000});
- assert.equal(await page.locator('.bottle-webgl').count(),1);
+await check('the supplied film is visible and paused until scroll moves it', async () => {
+ await page.waitForSelector('.film-visible',{timeout:30000});
+ assert.equal(await page.locator('.scroll-film').evaluate(video=>video.paused),true);
+ assert.equal(await page.locator('.bottle-webgl').count(),0);
  assert.equal(await page.locator('.bottle-art').evaluate(e=>getComputedStyle(e).visibility),'hidden');
 });
-await check('bottle follows scroll, opens, sprays and reveals the notes', async () => {
- const firstX = await page.locator('.travelling-bottle').evaluate(e=>e.getBoundingClientRect().x);
+await check('scroll seeks the film forward and backward and reveals the notes', async () => {
  await storyScroll(page,0.50);
- const nextX = await page.locator('.travelling-bottle').evaluate(e=>e.getBoundingClientRect().x);
- assert.ok(Math.abs(nextX-firstX)>200);
+ await page.waitForFunction(() => {
+  const video = document.querySelector('.scroll-film');
+  return !video.seeking && video.paused && video.currentTime > 2.7 && video.currentTime < 3.2;
+ });
  assert.equal(await page.locator('.journey-rail a[aria-current]').innerText(),'The revelation');
  assert.ok(await page.locator('.journey-stage').evaluate(e=>e.classList.contains('is-spraying')));
  assert.ok(await page.locator('.scent-journey').evaluate(e=>e.classList.contains('notes-released')));
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.scent-note')).opacity==='1', {}, {timeout:15000});
- await page.getByRole('button',{name:'Experience the mist again'}).click();
- assert.ok(await page.locator('.journey-stage').evaluate(e=>e.classList.contains('replay-spray')));
+ await page.getByRole('button',{name:'Back to the bottle opening'}).click();
+ await page.waitForFunction(() => {
+  const video = document.querySelector('.scroll-film');
+  const story = document.querySelector('.scent-journey');
+  const target = story.getBoundingClientRect().top + scrollY + (story.offsetHeight - innerHeight) * .10;
+  return Math.abs(scrollY - target) < 1 && !video.seeking && video.currentTime < .56;
+ });
  await storyScroll(page,0);
- assert.equal(await page.locator('.travelling-bottle').evaluate(e=>e.style.getPropertyValue('--cap-lift')),'0px');
+ await page.waitForFunction(() => {
+  const video = document.querySelector('.scroll-film');
+  return !video.seeking && video.currentTime >= .375 && video.currentTime < .4;
+ });
 });
 await check('menu supports Escape, focus restoration and chapter navigation', async () => {
- await page.getByRole('button',{name:'Open menu'}).click();
- assert.equal(await page.locator('#mobile-nav').evaluate(e=>e.open),true);
- await page.keyboard.press('Escape');
- assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'false');
- assert.ok(await page.locator('.menu-toggle').evaluate(e=>e===document.activeElement));
- await page.getByRole('button',{name:'Open menu'}).click();
- await page.locator('#mobile-nav').getByRole('link',{name:'RHAPSODY',exact:true}).click();
- assert.equal(await page.locator('#mobile-nav').evaluate(e=>e.open),false);
+ const phone = await browser.newPage({viewport:{width:390,height:844}, reducedMotion:'reduce'});
+ try {
+  await phone.goto(base);
+  await phone.getByRole('button',{name:'Open menu'}).click();
+  assert.equal(await phone.locator('#mobile-nav').evaluate(e=>e.open),true);
+  await phone.keyboard.press('Escape');
+  assert.equal(await phone.locator('.menu-toggle').getAttribute('aria-expanded'),'false');
+  assert.ok(await phone.locator('.menu-toggle').evaluate(e=>e===document.activeElement));
+  await phone.getByRole('button',{name:'Open menu'}).click();
+  await phone.locator('#mobile-nav').getByRole('link',{name:'RHAPSODY',exact:true}).click();
+  assert.equal(await phone.locator('#mobile-nav').evaluate(e=>e.open),false);
+ } finally {
+  await phone.close();
+ }
 });
 await check('network failures give a useful message and allow signup retry', async () => {
  await page.route('**/api/waitlist',route=>route.abort());
@@ -109,6 +125,7 @@ await check('reduced motion shows every note without a spray animation', async (
 });
 await check('WebGL failure keeps the supplied bottle visible and the story usable', async () => {
  const fallback=await browser.newPage();
+ await fallback.route('**/rhapsody-scroll.mp4',route=>route.abort());
  await fallback.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl2'?null:original.call(this,type,...args);};});
  await fallback.goto(base,{waitUntil:'networkidle'});
  await fallback.waitForFunction(()=>document.querySelector('.travelling-bottle').dataset.renderer==='fallback');

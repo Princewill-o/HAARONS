@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import worker from '../dist/server/index.js';
 
 test('scroll modules and SVG assets have browser-safe MIME types', async () => {
@@ -13,6 +14,19 @@ test('head requests return headers without a response body', async () => {
  const response = await worker.fetch(new Request('https://example.test/', {method:'HEAD'}), {});
  assert.equal(response.status, 200);
  assert.equal(await response.text(), '');
+});
+test('the scroll film supports partial video reads and suffix ranges', async () => {
+ const path = '/assets/videos/rhapsody-scroll.mp4';
+ const source = await readFile('public' + path);
+ const readRange = range => worker.fetch(new Request('https://example.test' + path, {headers: {Range: range}}), {});
+ for (const [range, start, end] of [['bytes=5-18', 5, 18], ['bytes=-9', source.length - 9, source.length - 1]]) {
+  const response = await readRange(range);
+  assert.equal(response.status, 206);
+  assert.equal(response.headers.get('Content-Range'), `bytes ${start}-${end}/${source.length}`);
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()), source.subarray(start, end + 1));
+ }
+ const invalid = await readRange(`bytes=${source.length}-`);
+ assert.equal(invalid.status, 416);
 });
 test('unavailable database returns an honest retryable failure', async () => {
  const response = await worker.fetch(new Request('https://example.test/api/waitlist', {

@@ -161,15 +161,9 @@
 @media(max-width:720px){.chapter-description{font-size:.8125rem}.chapter-release .chapter-description{font-size:.75rem}.development-caption,.chapter-release .development-caption{font-size:.5rem}.stage-caption{font-size:.5rem}.journey-cta{font-size:.6875rem}.scent-note p{font-size:.6875rem}.spray-replay{font-size:.6875rem}.scent-words{font-size:.5rem}.journey-rail a{font-size:0}}
 @media(max-width:720px){.immersive-page .house-header .wordmark{grid-column:2;grid-row:1;justify-self:center}.immersive-page .house-header .menu-toggle{grid-column:3;grid-row:1;justify-self:end}}
 @media(min-width:721px){html:not(.journey-ready) .chapter-copy.copy-right{margin-left:0;width:44%}}
-.perfume-backdrop{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;opacity:.31;filter:brightness(.48) saturate(.72);mix-blend-mode:screen;z-index:0;transition:opacity .7s ease}
 .journey-stage:after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,#171412c9 0%,#17141250 42%,#1714129e 100%),linear-gradient(0deg,#17141299,#17141240 50%,#17141299)}
 .journey-dinner{z-index:1}
 .travelling-bottle{z-index:3}
-@media(max-width:720px){.perfume-backdrop{object-position:58% center;opacity:.24;filter:brightness(.42) saturate(.7)}.journey-stage:after{background:linear-gradient(180deg,#171412d9 0%,#17141270 35%,#17141275 65%,#171412dc 100%)}}
-@media(prefers-reduced-motion:reduce){.perfume-backdrop{display:none}}
-.perfume-backdrop.playback-unavailable{opacity:0}
-.perfume-backdrop{opacity:.38;filter:brightness(.58) saturate(.78)}
-@media(max-width:720px){.perfume-backdrop{opacity:.3;filter:brightness(.5) saturate(.76)}}
 /* Black house navigation, with the supplied monogram as the only wordmark. */
 .immersive-page .house-header,.about-site .house-header{position:absolute;inset:0 0 auto;height:82px;min-height:82px;display:grid;grid-template-columns:100px 1fr 220px;align-items:center;gap:28px;padding:0 5vw;background:#080808;color:#faf5ec;border:0;z-index:20}
 .brand-mark{display:flex;width:64px;height:66px;align-items:center;justify-content:flex-start}
@@ -186,16 +180,12 @@
 .footer-logo{display:flex;width:84px;height:92px;margin:0 auto 22px;align-items:center;justify-content:center}
 .footer-logo img{max-width:76px;max-height:84px;object-fit:contain}
 .immersive-page footer .footer-logo img{filter:brightness(.76)}
-.perfume-backdrop{opacity:.38;filter:brightness(.58) saturate(.78);transition:opacity .65s ease}
-.perfume-backdrop-next{opacity:0}
-.perfume-backdrop.is-active{opacity:.38}
 @media(max-width:720px){
  .immersive-page .house-header,.about-site .house-header{position:absolute;height:72px;min-height:72px;grid-template-columns:54px 1fr 54px;padding:0 18px;gap:8px}
  .brand-mark{grid-column:1;grid-row:1;width:48px;height:60px}
  .brand-mark img{max-width:42px;max-height:50px}
  .desktop-nav,.header-cta{display:none}
  .immersive-page .house-header .menu-toggle,.about-site .house-header .menu-toggle{display:flex;grid-column:3;grid-row:1;justify-self:end;align-items:center;justify-content:center;width:48px;height:48px;color:#faf5ec}
- .perfume-backdrop.is-active{opacity:.3}
 }
 
 /* Cinematic amber light: soft edge pools, warm highlights and no orbit graphics. */
@@ -204,12 +194,47 @@
 .journey-glow:before{content:'';position:absolute;inset:-15%;background:radial-gradient(ellipse at 69% 37%,#f3c88722 0,transparent 32%);filter:blur(32px)}
 .bottle-aura{background:radial-gradient(ellipse,#eaa54442 0,#b86a2230 28%,#713b1e1a 48%,transparent 70%);filter:blur(32px)}
 .journey-stage:after{background:linear-gradient(90deg,#100d0de6 0%,#100d0d42 42%,#100d0dc7 100%),linear-gradient(0deg,#100d0dbb,#100d0d36 52%,#100d0ddd)}
-/* Keep the films legible while preserving the dark, cinematic stage. */
-.perfume-backdrop{opacity:.56;filter:brightness(.82) saturate(.84)}
-.perfume-backdrop.is-active{opacity:.56}
+/* Low light around the copy for the photograph and 3D fallback. */
 .journey-stage:after{background:linear-gradient(90deg,#100d0de0 0%,#100d0d70 32%,#100d0d18 52%,#100d0d70 78%,#100d0db0 100%),linear-gradient(0deg,#100d0d78 0%,#100d0d12 46%,#100d0d68 100%)}
 @media(max-width:720px){
- .perfume-backdrop{filter:brightness(.72) saturate(.82)}
- .perfume-backdrop.is-active{opacity:.44}
  .journey-stage:after{background:linear-gradient(180deg,#100d0dde 0%,#100d0d85 18%,#100d0d35 42%,#100d0d30 58%,#100d0d83 82%,#100d0ddf 100%)}
 }
+
+.scroll-film{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ object-position:center;
+ transform:translateX(var(--film-x,14.8%));
+ mask-image:linear-gradient(to right,transparent,black 16%,black 84%,transparent);
+ filter:brightness(.79) saturate(.88);
+ z-index:1;
+ opacity:0;
+}
+.film-visible .scroll-film{opacity:1}
+.film-visible :is(.travelling-bottle,.journey-dinner){visibility:hidden}
+.film-visible::after{
+ background:linear-gradient(90deg,#100d0df0,#100d0dc7 26%,#100d0d20 54%,#100d0d23 83%,#100d0d91),
+ linear-gradient(0deg,#100d0db8,transparent 32%,transparent 76%,#100d0d50);
+}
+.film-visible.film-copy-right::after{
+ background:linear-gradient(270deg,#100d0def,#100d0dcb 28%,#100d0d20 56%,#100d0d18 80%,#100d0d86),
+ linear-gradient(0deg,#100d0db8,transparent 32%,transparent 76%,#100d0d50);
+}
+.scent-journey:has(.film-visible) .chapter-copy{text-shadow:0 2px 18px #100d0d}
+@media(max-width:720px){
+ .scroll-film{
+  top:auto;
+  height:calc(100% - 15svh);
+  transform:none;
+  object-position:var(--film-focus,39%) center;
+  mask-image:linear-gradient(180deg,transparent,black 27%,black 86%,transparent);
+  filter:brightness(.68) saturate(.86);
+ }
+ .film-visible::after,.film-visible.film-copy-right::after{
+  background:linear-gradient(180deg,#100d0d 0%,#100d0db8 26%,#100d0d40 54%,transparent 68%,#100d0db0 100%);
+ }
+}
+@media(prefers-reduced-motion:reduce){.scroll-film{display:none}}

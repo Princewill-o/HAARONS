@@ -1,6 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getJourneyState } from '../public/journey-model.mjs';
+import { getFilmTime, getJourneyState } from '../public/journey-model.mjs';
+
+test('the film moves through the opening and liquid shots in either scroll direction', () => {
+ const start = getFilmTime(0, 10);
+ const opening = getFilmTime(.25, 10);
+ const liquid = getFilmTime(.5, 10);
+ const end = getFilmTime(1, 10);
+ assert.ok(start >= .375 && start < .4);
+ assert.ok(opening > 1 && opening < 2);
+ assert.ok(liquid > 2.8 && liquid < 3.1);
+ assert.ok(end >= 239 / 24 && end < 10);
+ assert.equal(getFilmTime(.25, 10), opening);
+ assert.equal(getFilmTime(-1, 10), start);
+ assert.equal(getFilmTime(2, 10), end);
+ assert.equal(getFilmTime(.4, NaN), 0);
+});
 
 test('bottle opens, presses and releases mist at the middle of the story', () => {
  const start = getJourneyState(0);

@@ -1,4 +1,5 @@
 import { getJourneyState } from './journey-model.mjs';
+import { createScrollFilm } from './scroll-film.js';
 
 const journey = document.querySelector('.scent-journey');
 if (journey) {
@@ -10,10 +11,13 @@ if (journey) {
  const mobile = window.matchMedia('(max-width: 720px)');
  const replay = journey.querySelector('.spray-replay');
  let frame = 0, active = true, replayTimer, bottle3D;
- import('./bottle-3d.js').then(({createBottle3D}) => {
-  bottle3D = createBottle3D(bottle, journey, motion);
-  schedule();
- }).catch(() => { bottle.dataset.renderer = 'fallback'; });
+ const film = createScrollFilm(stage.querySelector('.scroll-film'), stage, motion, () => {
+  replay.textContent = 'Experience the mist again';
+  import('./bottle-3d.js').then(({createBottle3D}) => {
+   bottle3D = createBottle3D(bottle, journey, motion);
+   schedule();
+  }).catch(() => { bottle.dataset.renderer = 'fallback'; });
+ });
  let top = 0, distance = 1;
  const particles = journey.querySelector('.mist-particles');
  // A bounded number of composited particles; nothing new is allocated on scroll.
@@ -36,6 +40,9 @@ if (journey) {
   frame = 0;
   const p = Math.max(0, Math.min(1, (window.scrollY - top) / distance));
   const state = getJourneyState(p, motion.matches);
+  film.update(p);
+  stage.style.setProperty('--film-x', `${(state.x - 50) * .78}%`);
+  stage.style.setProperty('--film-focus', `${39 + Math.min(p / .5, 1) * 11}%`);
   const x = mobile.matches ? 50 : motion.matches ? 69 : state.x;
   bottle.style.setProperty('--bottle-x', `${x}%`);
   stage.style.setProperty('--lens-x', `${x}%`);
@@ -54,6 +61,7 @@ if (journey) {
   journey.classList.toggle('notes-released', state.reveal > 0.08 || motion.matches);
   journey.classList.toggle('motion-reduced', motion.matches);
   const current = Math.min(chapters.length - 1, Math.round(p * (chapters.length - 1)));
+  stage.classList.toggle('film-copy-right', current === 1 || current === 2);
   chapters.forEach((chapter, i) => chapter.classList.toggle('is-current', i === current));
   links.forEach((link, i) => {
    if (i === current) link.setAttribute('aria-current', 'step');
@@ -83,6 +91,11 @@ if (journey) {
  mobile.addEventListener('change', measure);
  replay.addEventListener('click', () => {
   if (motion.matches) return;
+  if (film.enabled) {
+   chapters[0].focus({preventScroll:true});
+   window.scrollTo({ top:top + distance * .10, behavior:'smooth' });
+   return;
+  }
   bottle3D?.replay();
   clearTimeout(replayTimer);
   stage.classList.remove('replay-spray');
@@ -92,72 +105,4 @@ if (journey) {
  });
  document.documentElement.classList.add('journey-ready');
  measure();
-}
-
-// Two locally compressed, muted videos overlap briefly so a slow decode never
-// exposes the final frame. The outgoing video loops until its successor is ready.
-const videoDeck = [...document.querySelectorAll('.perfume-backdrop')];
-if (videoDeck.length === 2) {
- const sources = ['assets/videos/perfume-0.mp4','assets/videos/perfume-1.mp4','assets/videos/perfume-2.mp4'];
- const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
- let active = videoDeck[0], standby = videoDeck[1], currentIndex = 0, timer = 0, preparing = false;
- const setSource = (video, source) => {
-  if (video.dataset.source === source) return;
-  video.dataset.source = source;
-  video.src = source;
-  video.load();
- };
- const play = video => video.play().catch(() => {});
- const prepareNext = () => {
-  if (preparing || motionPreference.matches || document.hidden) return;
-  preparing = true;
-  const nextIndex = (currentIndex + 1) % sources.length;
-  setSource(standby, sources[nextIndex]);
-  standby.currentTime = 0;
-  const switchWhenReady = () => {
-   if (motionPreference.matches || document.hidden || standby.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {preparing=false;return;}
-   standby.classList.add('is-active');
-   play(standby);
-   const outgoing = active;
-   active = standby; standby = outgoing; currentIndex = nextIndex; preparing = false;
-   window.setTimeout(() => {
-    outgoing.pause();
-    outgoing.classList.remove('is-active');
-    const upcoming = sources[(currentIndex + 1) % sources.length];
-    setSource(outgoing, upcoming);
-    outgoing.currentTime = 0;
-   }, 650);
-   scheduleNext();
-  };
-  if (standby.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) switchWhenReady();
-  else {
-   standby.addEventListener('canplay', switchWhenReady, {once:true});
-   standby.addEventListener('error', () => {preparing=false;}, {once:true});
-  }
- };
- const scheduleNext = () => {
-  window.clearTimeout(timer);
-  if (motionPreference.matches || document.hidden) return;
-  const remaining = Number.isFinite(active.duration) ? Math.max(300, (active.duration - active.currentTime - .55) * 1000) : 3200;
-  timer = window.setTimeout(prepareNext, remaining);
- };
- videoDeck.forEach(video => {
-  video.muted = true; video.playsInline = true; video.loop = true;
-  video.addEventListener('playing', scheduleNext);
-  video.addEventListener('stalled', () => {if(video===active) scheduleNext();});
-  video.addEventListener('error', () => {if(video===active) prepareNext();});
- });
- setSource(active, sources[0]);
- play(active);
- active.addEventListener('loadedmetadata', scheduleNext, {once:true});
- document.addEventListener('visibilitychange', () => {
-  window.clearTimeout(timer);
-  if (document.hidden) videoDeck.forEach(video=>video.pause());
-  else {play(active);scheduleNext();}
- });
- motionPreference.addEventListener('change', () => {
-  window.clearTimeout(timer);
-  if (motionPreference.matches) videoDeck.forEach(video=>video.pause());
-  else {play(active);scheduleNext();}
- });
 }

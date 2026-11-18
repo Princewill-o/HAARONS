@@ -1,5 +1,30 @@
 import { subscribe, unsubscribe } from './database.js';
 const json = (body, status=200) => new Response(JSON.stringify(body), {status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+function serveVideo(request, data, headers) {
+ const size = data.length / 4 * 3 - (data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0);
+ headers.set('Accept-Ranges', 'bytes');
+ headers.set('Content-Length', String(size));
+ if (request.method === 'HEAD') return new Response(null, {headers});
+
+ const range = request.headers.get('Range');
+ if (!range) return new Response(Uint8Array.from(atob(data), c => c.charCodeAt(0)), {headers});
+
+ const match = /^bytes=(\d*)-(\d*)$/i.exec(range.trim());
+ const start = match?.[1] ? Number(match[1]) : Math.max(0, size - Number(match?.[2]));
+ const end = match?.[1] && match[2] ? Math.min(size - 1, Number(match[2])) : size - 1;
+ if (!match || !Number.isSafeInteger(start) || start > end) {
+  headers.set('Content-Range', `bytes */${size}`);
+  headers.set('Content-Length', '0');
+  return new Response(null, {status:416, headers});
+ }
+ const offset = start % 3;
+ const chunk = data.slice(Math.floor(start / 3) * 4, Math.ceil((end + 1) / 3) * 4);
+ const bytes = Uint8Array.from(atob(chunk), c => c.charCodeAt(0)).subarray(offset, offset + end - start + 1);
+ headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+ headers.set('Content-Length', String(bytes.length));
+ return new Response(bytes, {status:206, headers});
+}
+
 export default {
  async fetch(request,env) {
   const url = new URL(request.url);
@@ -30,7 +55,9 @@ export default {
   const key=url.pathname==='/'?'index.html':url.pathname.slice(1);
   const asset=Object.hasOwn(ASSETS,key)?ASSETS[key]:null;
   if(!asset) return new Response('Page not found',{status:404});
-  const bytes=Uint8Array.from(atob(asset.data),c=>c.charCodeAt(0));
-  return new Response(request.method==='HEAD'?null:bytes,{headers:{'Content-Type':asset.type,'Cache-Control':key.endsWith('.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; img-src 'self' data:; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"}});
+  const headers = new Headers({'Content-Type':asset.type,'Cache-Control':key.endsWith('.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; img-src 'self' data:; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"});
+  if (asset.type === 'video/mp4') return serveVideo(request, asset.data, headers);
+  const bytes = request.method === 'HEAD' ? null : Uint8Array.from(atob(asset.data), c => c.charCodeAt(0));
+  return new Response(bytes, {headers});
  }
 };

@@ -17,11 +17,9 @@ For a quick visual-only preview, the `public` folder can also be served with a s
 
 ## The experience
 
-- One real Three.js/WebGL model follows a five-chapter fragrance story using normal page scroll.
-- Procedural glass geometry, amber liquid, curved paper label, burgundy cap, and separate gold pump.
-- Scroll lifts and rolls the cap away, moves the camera toward the neck and reveals the ingredients inside the amber liquid. The atomiser still fires at the midpoint and can be replayed.
-- Reduced motion removes rotations, parallax, spray and blur. WebGL failure falls back to the supplied product photograph, clipped in SVG without changing the original asset. The text is readable without JavaScript.
-- Three muted perfume films run as a dim background. Two locally compressed clips overlap during preloaded crossfades; each video loops as a fallback, so a slow next clip cannot leave a held frame. Playback pauses in hidden tabs and follows reduced motion.
+- The supplied bottle opening film runs behind the story. Scroll moves through its frames in either direction, from the closed bottle to the ingredients in the amber liquid.
+- If the film fails to load, the Three.js bottle takes over. The supplied product photograph covers browsers without WebGL and stays still for reduced motion.
+- The opening can be revisited from the revelation chapter. The text is readable without JavaScript.
 - The black navigation uses the supplied gold monogram at the left; the footer uses the same emblem.
 - Rendering pauses offscreen and in hidden tabs. Pixel density, transmission resolution and frame rate are capped for phones.
 - The founder, story, FAQ, privacy, signup and unsubscribe pages retain the supplied product facts. RHAPSODY remains in development; there is no invented release date, price, preorder or checkout.
@@ -45,7 +43,8 @@ Unit checks cover reversible scroll choreography, bounds, reduced motion, module
 - `public/journey-model.mjs`: pure scroll choreography.
 - `public/bottle-3d.js`: model, lighting, camera, rendering lifecycle and projected spray origin.
 - `public/liquid-macro.js`: the 3D view inside the bottle.
-- `public/assets/videos`: three compressed background perfume clips.
+- `public/scroll-film.js`: maps chapter progress to frames in the supplied clip.
+- `public/assets/videos/rhapsody-scroll.mp4`: the muted film used for scroll playback.
 - `public/vendor`: pinned local Three.js runtime and MIT license. These local files keep the existing self-only script policy intact. Version is also recorded in `package.json` / lockfile.
 - `public/script.js`: menu and honest launch-list feedback.
 - `worker/`, `db/`, `drizzle/`: original waitlist service and persistence.
